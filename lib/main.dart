@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:math_expressions/math_expressions.dart';
+import 'package:flutter/services.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -10,9 +12,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
+      theme: ThemeData(primarySwatch: Colors.orange),
       debugShowCheckedModeBanner: false,
-      home: HomePage(),
+      home: const HomePage(),
     );
   }
 }
@@ -29,9 +32,9 @@ class _HomePage extends State<HomePage> {
 
   List<List> history = [];
   final List<String> buttons = [
-    'C',
-    'DEL',
-    'M-',
+    'c',
+    'del',
+    'm-',
     '+',
     '7',
     '8',
@@ -55,7 +58,8 @@ class _HomePage extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        title: const Text('Calculator',style: TextStyle(color: Colors.grey),),
+        backgroundColor: Colors.black12,
       ),
       backgroundColor: Colors.black,
       body: Column(
@@ -87,70 +91,80 @@ class _HomePage extends State<HomePage> {
                                 )));
                       }))),
           Container(
-              padding: const EdgeInsets.fromLTRB(5, 5, 30, 5),
+              padding: const EdgeInsets.fromLTRB(5, 5, 20, 5),
               alignment: Alignment.centerRight,
               child: Text(
                 userInput,
                 style: const TextStyle(fontSize: 37, color: Colors.white),
               )),
           Container(
-              padding: const EdgeInsets.fromLTRB(5, 5, 30, 5),
+              padding: const EdgeInsets.fromLTRB(5, 5, 20, 5),
               alignment: Alignment.centerRight,
               child: Text(
-                answer,
+                answer.isNotEmpty ? '=$answer' : '',
                 style: const TextStyle(fontSize: 30, color: Colors.white),
               )),
-          GridView.builder(
-              shrinkWrap: true,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                childAspectRatio: 1.5,
-              ),
-              itemCount: buttons.length,
-              itemBuilder: (BuildContext context, int index) {
-                if (index != 16) {
-                  return CalcButton(
-                      text: buttons[index],
-                      textColor: isOperator(buttons[index])
-                          ? Colors.deepOrange
-                          : Colors.white,
-                      buttonTapped: () {
-                        setState(() {
-                          if (index == 0) {
-                            userInput = '0';
-                            answer = '';
-                          } else if (index == 1 && userInput != '0') {
-                            userInput =
-                                userInput.substring(0, userInput.length - 1);
-                          } else if (index == 19) {
-                            if (userInput != '0' || answer != '') {
-                              try {
-                                equalTo();
-                              } catch (e) {
-                                print(e);
-                                answer = 'Error';
-                                return;
+          Container(
+              padding: const EdgeInsets.fromLTRB(30, 14.75, 30, 5),
+              height: 20,
+              child: Container(
+                color: Colors.grey,
+              )),
+          Container(
+            padding: const EdgeInsets.only(bottom: 30),
+            child: GridView.builder(
+                shrinkWrap: true,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  childAspectRatio: 1.5,
+                ),
+                itemCount: buttons.length,
+                itemBuilder: (BuildContext context, int index) {
+                  if (index != 16) {
+                    return CalcButton(
+                        text: buttons[index],
+                        textColor: isOperator(buttons[index])
+                            ? Colors.deepOrange
+                            : Colors.white,
+                        buttonTapped: () {
+                          setState(() {
+                            if (index == 0) {
+                              userInput = '0';
+                              answer = '';
+                            } else if (index == 1 && userInput != '0') {
+                              userInput =
+                                  userInput.substring(0, userInput.length - 1);
+                            } else if (index == 19) {
+                              if (userInput != '0' || answer != '') {
+                                try {
+                                  equalTo();
+                                } catch (e) {
+                                  print(e);
+                                  answer = 'Error';
+                                  return;
+                                }
+                                history.insert(0, [userInput, answer]);
                               }
-                              history.insert(0, [userInput, answer]);
+                              //print(history);
+                            } else if (index == 2) {
+                              history = [];
+                            } else if (userInput == '0' &&
+                                (index == 7 || index == 11)) {
+                              userInput += buttons[index];
+                            } else if (userInput == '0' &&
+                                index != 7 &&
+                                index != 11) {
+                              userInput = buttons[index];
+                            } else if (userInput.length <= 15) {
+                              userInput += buttons[index];
                             }
-                            //print(history);
-                          } else if (index == 2) {
-                            history = [];
-                          } else if (userInput == '0' &&
-                              index != 7 &&
-                              index != 11) {
-                            userInput = buttons[index];
-                          } else if (userInput == '0' &&
-                              (index == 7 || index == 11)) {
-                          } else if (userInput.length <= 15) {
-                            userInput += buttons[index];
-                          }
+                          });
                         });
-                      });
-                } else {
-                  return Container();
-                }
-              }),
+                  } else {
+                    return Container();
+                  }
+                })
+          ),
         ],
       ),
     );
@@ -174,9 +188,9 @@ bool isOperator(String x) {
       x == 'x' ||
       x == '-' ||
       x == '+' ||
-      x == 'C' ||
-      x == 'DEL' ||
-      x == 'M-' ||
+      x == 'c' ||
+      x == 'del' ||
+      x == 'm-' ||
       x == '%') {
     return true;
   }
@@ -197,7 +211,7 @@ class CalcButton extends StatelessWidget {
         color: Colors.transparent,
         child: Ink(
             decoration: BoxDecoration(
-                color: isEqual(text) ? Colors.deepOrange : Colors.transparent,
+                color: isEqual(text) ? Colors.deepOrangeAccent : Colors.transparent,
                 shape: BoxShape.circle),
             child: InkWell(
                 customBorder: const CircleBorder(),
@@ -229,3 +243,4 @@ bool isEqual(String x) {
     return false;
   }
 }
+
